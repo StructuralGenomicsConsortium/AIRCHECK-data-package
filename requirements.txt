@@ -6,4 +6,5 @@ gcsfs
 tqdm
 pyyaml
 click
+build
 

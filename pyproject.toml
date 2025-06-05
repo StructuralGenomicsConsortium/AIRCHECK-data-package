@@ -6,7 +6,7 @@ requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "airctest"
+name = "aircheckdata"
 version = "1.2.0"
 description = "This repository contains the implementation of  dataset loader for Parquet files."
 authors = [
@@ -47,7 +47,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [project.scripts]
-airctest = "airctest.cli.main:cli"
+aircheckdata = "aircheckdata.cli.main:cli"
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]

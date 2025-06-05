@@ -22,7 +22,7 @@ class ConfigLoader:
     def load(self, config_name= "datasets.yaml") -> dict:
         """Load config from package root configs folder."""
         try:
-            with resources.files("airctest").parent.joinpath("configs", config_name).open("r") as f:
+            with resources.files("aircheckdata").parent.joinpath("configs", config_name).open("r") as f:
                 return yaml.safe_load(f)
         except (AttributeError, FileNotFoundError):
             # Fallback: try to find it relative to the current file
@@ -49,7 +49,6 @@ class GetDataset:
         # Make a POST request to your endpoint
         try:
             response = requests.post(
-                # "http://127.0.0.1:8000/generate-signed-url", json=payload)
                 "https://fastapi-gcs-app-153945772792.northamerica-northeast2.run.app/generate-signed-url", json=payload)
 
             if response.status_code == 200:

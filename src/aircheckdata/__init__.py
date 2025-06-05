@@ -17,11 +17,3 @@ from .main import DataLoader, load_dataset, get_columns, list_datasets
 __all__ = ["DataLoader", "load_dataset", "get_columns", "list_datasets"]
 __version__ = "0.1.0"
 
-# loader = DataLoader(
-#     partner_name="HitGen", dataset_name="WDR91", columns=["ECFP4", "ECFP6"], show_progress=True)
-# print("Available partners:", loader.list_available_partners())
-# print("Available datasets:", loader.list_available_datasets())
-# print("Dataset columns:", loader.get_dataset_columns())
-
-
-# pip install --editable .

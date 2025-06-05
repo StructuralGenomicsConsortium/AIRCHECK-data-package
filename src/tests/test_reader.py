@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from airctest import DataLoader
+from aircheckdata import DataLoader
 
 
 def test_get_dataset_columns():
@@ -12,14 +12,6 @@ def test_get_dataset_columns():
     assert isinstance(columns, list)
     assert "ECFP4" in [item['name'] for item in columns]
     assert "LABEL" in [item['name'] for item in columns]
-
-
-# def test_get_dataset_columns_invalid():
-#     loader = DataLoader(partner_name="HitGen", dataset_name="WDR91")
-#     with pytest.raises(ValueError):
-#         # loader.get_dataset_columns("nonexistent_dataset")
-#         columns = loader.get_dataset_columns()
-#         assert "nonexistent_dataset" in [item['name'] for item in columns]
 
 
 @patch("airctest.main.pq.read_table")

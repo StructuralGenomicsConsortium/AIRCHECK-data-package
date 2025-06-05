@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from airctest import get_columns, list_datasets, load_dataset
+from aircheckdata import get_columns, list_datasets, load_dataset
 
 
 @click.group(help="aircheckdata - A utility for loading AIRCHECK data from Python environment and interacting with them.")
