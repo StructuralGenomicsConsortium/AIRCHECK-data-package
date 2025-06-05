@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "airctest"
-version = "1.2.0"
+version = "1.0.0"
 description = "This repository contains the implementation of  dataset loader for Parquet files."
 authors = [
 {name = "Nabin Bagale", email = "bhklab.nabinbagale@gmail.com"},
