@@ -46,7 +46,7 @@ class GetDataset:
             "target": self.dataset_name,
         }
 
-        # Make a POST request to your endpoint
+       
         try:
             response = requests.post(
                 "https://fastapi-gcs-app-153945772792.northamerica-northeast2.run.app/generate-signed-url", json=payload)
