@@ -7,4 +7,5 @@ tqdm
 pyyaml
 click
 build
+pytest
 
