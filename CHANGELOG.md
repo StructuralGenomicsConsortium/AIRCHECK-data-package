@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v1.0.1 (2025-06-05)
+
+### Bug Fixes
+
+- Test file modified
+  ([`66b599c`](https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package/commit/66b599ccafd9cbfb0f099e3ce790967f21983f95))
+
+
 ## v1.0.0 (2025-06-05)
 
 - Initial Release
