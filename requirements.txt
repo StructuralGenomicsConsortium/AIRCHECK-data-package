@@ -1,0 +1,9 @@
+fastapi
+pandas
+google-cloud-storage
+pyarrow
+gcsfs
+tqdm
+pyyaml
+click
+
