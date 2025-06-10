@@ -1,4 +1,4 @@
-"""AirCTEST: A Python package for loading datasets from Google Cloud Storage (GCS) using signed URLs."""
+"""aircheckdata: A Python package for loading datasets from Google Cloud Storage (GCS) using signed URLs."""
 import io
 import logging
 
