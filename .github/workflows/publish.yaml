@@ -1,123 +1,120 @@
-name: Build and Publish to PyPI
+name: release
 
 on:
-  # Only trigger on pushes to main for semantic release
-  push:
-    branches: [main]
-  # Trigger on pull requests to main
-  pull_request:
-    branches: [main]
-
-  # Manual triggering
   workflow_dispatch:
+    inputs:
+      release-version:
+        description: "A valid Semver version string"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: "release-${{ github.ref }}"
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash -l {0}
 
 jobs:
   test:
+    uses: ./.github/workflows/test.yaml
+
+  check-semver:
+    # Do not release if not triggered from the default branch
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+    timeout-minutes: 30
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout the code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Get version
+        id: version
+        run: |
+          version=$(git describe --abbrev=0 --tags)
+          echo $version
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Semver check
+        id: semver_check
+        uses: madhead/semver-utils@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          lenient: false
+          version: ${{ inputs.release-version }}
+          compare-to: ${{ steps.version.outputs.version }}
 
-      - name: Install dependencies
+      - name: Semver ok
+        if: steps.semver_check.outputs.comparison-result != '>'
         run: |
-          python -m pip install --upgrade pip
-          pip install build pytest ruff
-          pip install -e .[dev]
+          echo "The release version is not valid Semver (${{ inputs.release-version }}) that is greater than the current version ${{ steps.version.outputs.version }}."
+          exit 1
 
-      - name: Lint with ruff
-        run: |
-          ruff check .
+  release:
+    needs: [test, check-semver]
 
-      - name: Run tests
-        run: |
-          pytest -v tests/
-
-  semantic-release:
-    needs: test
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
-    outputs:
-      released: ${{ steps.release.outputs.released }}
-      version: ${{ steps.release.outputs.version }}
-      tag: ${{ steps.release.outputs.tag }}
+    timeout-minutes: 30
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout the code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Use a custom token to trigger release events
-          token: ${{ secrets.SEMANTIC_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
-      # Debug: Show recent commits
-      - name: Show recent commits
-        run: |
-          echo "Recent commits:"
-          git log --oneline -10
-          echo "Current version from git tags:"
-          git tag --sort=-version:refname | head -5 || echo "No tags found"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      - name: Python Semantic Release
-        id: release
-        uses: python-semantic-release/python-semantic-release@master
+      - name: Install the project
+        run: uv sync --frozen --all-groups --python 3.12
+
+      - name: Build Changelog
+        id: github_release
+        uses: mikepenz/release-changelog-builder-action@v5
         with:
-          github_token: ${{ secrets.SEMANTIC_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          verbose:
-            true
+          toTag: "main"
+          configuration: ".github/changelog_config.json"
 
-            # Debug: Show release outputs
-      - name: Show release outputs
+      - name: Create and push git tag
         run: |
-          echo "Released: ${{ steps.release.outputs.released }}"
-          echo "Version: ${{ steps.release.outputs.version }}"
-          echo "Tag: ${{ steps.release.outputs.tag }}"
+          # Configure git
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
-  build-and-publish:
-    # Only run if a release was created
-    if: needs.semantic-release.outputs.released == 'true'
-    needs: semantic-release
-    runs-on: ubuntu-latest
+          # Tag the release
+          git tag -a "${{ inputs.release-version }}" -m "Release version ${{ inputs.release-version }}"
 
-    steps:
-      - uses: actions/checkout@v4
+          # Checkout the git tag
+          git checkout "${{ inputs.release-version }}"
+
+          # Push the modified changelogs
+          git push origin main
+
+          # Push the tags
+          git push origin "${{ inputs.release-version }}"
+
+      - name: Build the wheel and sdist
+        run: uv build
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          fetch-depth: 0
-          ref: ${{ needs.semantic-release.outputs.tag }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          packages-dir: dist/
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          python-version: "3.12"
-
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
-
-      - name: Build package
-        run: |
-          python -m build
-
-      - name: Check distribution
-        run: |
-          twine check dist/*
-
-      - name: Publish to PyPI
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        run: |
-          twine upload dist/*
+          tag_name: ${{ inputs.release-version }}
+          body: ${{steps.github_release.outputs.changelog}}

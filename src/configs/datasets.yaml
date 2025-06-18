@@ -51,7 +51,7 @@ HitGen:
         description: "Count (non-binary) fingerprint generated using Extended Connectivity Fingerprint (ECFP) with radius 2 and 2048 bits"
 
   WDR12:
-    description: "WDR91 dataset containing standardized data for the WDR91 project."
+    description: "WDR12 dataset containing standardized data for the WDR12 project."
     columns:
       - name: "SMILES"
         description: "SMIELS representation of the chemical structure."
@@ -100,7 +100,7 @@ HitGen:
 
 
   SETDB1:
-    description: "WDR91 dataset containing standardized data for the WDR91 project."
+    description: "SETDB1 dataset containing standardized data for the SETDB1 project."
     columns:
       - name: "SMILES"
         description: "SMIELS representation of the chemical structure."
@@ -149,7 +149,7 @@ HitGen:
 
 
   LRRK2:
-    description: "WDR91 dataset containing standardized data for the WDR91 project."
+    description: "LRRK2 dataset containing standardized data for the LRRK2 project."
     columns:
       - name: "SMILES"
         description: "SMIELS representation of the chemical structure."
