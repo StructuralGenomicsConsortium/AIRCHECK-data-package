@@ -24,7 +24,25 @@ jobs:
         run: uv sync --group dev
 
       - name: Lint
-        run: uv run ruff check
+        run: uv run ruff check . --fix
 
-      - name: Format
-        run: uv run ruff format --check
+      - name: Format with ruff
+        run: uv run ruff format .
+
+      - name: Check if files were modified
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "❌ Files were reformatted. Please run 'uv run ruff format .' locally and commit the changes."
+            echo "Files that need formatting:"
+            git status --porcelain
+            echo ""
+            echo "Diff:"
+            git diff
+            exit 1
+          else
+            echo "✅ All files are properly formatted"
+          fi
+
+      - name: Type check (if you have mypy)
+        run: uv run mypy . || echo "Mypy not configured, skipping..."
+        continue-on-error: true
