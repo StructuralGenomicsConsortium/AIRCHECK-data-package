@@ -74,4 +74,4 @@ jobs:
         run: uv sync --all-groups --python ${{ matrix.python-version }}
 
       - name: Test CLI
-        run: uv run airctest --help
+        run: uv run aircheckdata --help
