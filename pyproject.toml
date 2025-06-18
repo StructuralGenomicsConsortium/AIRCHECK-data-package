@@ -1,4 +1,5 @@
 
+
 [build-system]
 requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
@@ -16,7 +17,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 dependencies = [
     "pandas>=1.3.0",
     "pyarrow>=5.0.0",
@@ -27,9 +28,21 @@ dependencies = [
     "click>=8.0.0",
 ]
 
+[dependency-groups]
+dev = [
+    "ipywidgets",
+    "jupyterlab",
+    "pytest >=7",
+    "pytest-xdist",
+    "pytest-cov",
+    "ruff",
+]
+
 [project.urls]
-"Homepage" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
+"Website" = "https://www.aircheck.ai/"
+"Source Code" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
 "Bug Tracker" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package/issues"
+"Documentation" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
 
 [project.optional-dependencies]
 gcs = ["google-cloud-storage>=2.0.0"]
@@ -47,6 +60,7 @@ where = ["src"]
 [project.scripts]
 aircheckdata = "aircheckdata.cli.main:cli"
 
+
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 branch = "main"
@@ -63,15 +77,14 @@ patch_tags = ["fix", "perf"]
 env = "GITHUB_TOKEN"
 
 [tool.semantic_release.changelog]
-#changelog_file = "CHANGELOG.md"
-default_templates.changelog_file = "CHANGELOG.md"
-
-
+changelog_file = "CHANGELOG.md"
 
 
 [tool.ruff]
+line-length = 88
 target-version = "py311"
 
+[tool.ruff.lint]
 # Activate all the rules that are pyupgrade-related
 select = [
   "UP",   # pyupgrade
@@ -88,9 +101,22 @@ select = [
 ignore = [
   "PD901",  # Allow short DataFrame names like df
   "F401", # Allow use of is-literal in f-strings
+   "D212", # Allow docstrings to not have a blank line after the summary
+   "E203", # Allow whitespace before ':', which is common in pandas code
+    "D213"   , # Allow docstrings to not have a blank line after the summary
 ]
 
-[tool.ruff.per-file-ignores]
-"__init__.py" = ["I001"]
+per-file-ignores = {"__init__.py" = ["F401"]}
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # or "numpy" or "pep257"
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Use trailing commas
+skip-magic-trailing-comma = false
+
+
 
 
