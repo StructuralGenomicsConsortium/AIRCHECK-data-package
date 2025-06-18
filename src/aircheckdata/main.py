@@ -1,4 +1,5 @@
 """aircheckdata: A Python package for loading datasets from Google Cloud Storage (GCS) using signed URLs."""
+
 import io
 import logging
 
@@ -18,8 +19,13 @@ logger = logging.getLogger(__name__)
 class DataLoader:
     """A class to load datasets from Google Cloud Storage (GCS) using signed URLs."""
 
-    def __init__(self, partner_name: str, dataset_name: str, columns: list[str] | None = None,
-                 show_progress: bool = False):
+    def __init__(
+        self,
+        partner_name: str,
+        dataset_name: str,
+        columns: list[str] | None = None,
+        show_progress: bool = False,
+    ):
         """Initialize the DataLoader with GCS URL and optional parameters.
 
         Args:
@@ -45,12 +51,14 @@ class DataLoader:
         if self.partner_name not in self.datasets:
             available = ", ".join(self.datasets.keys())
             raise ValueError(
-                f"Partner '{self.partner_name}' not found. Available partners: {available}")
+                f"Partner '{self.partner_name}' not found. Available partners: {available}"
+            )
 
         if self.dataset_name not in self.datasets[self.partner_name]:
             available = ", ".join(self.datasets.keys())
             raise ValueError(
-                f"Dataset '{self.dataset_name}' not found. Available datasets: {available}")
+                f"Dataset '{self.dataset_name}' not found. Available datasets: {available}"
+            )
 
         return self.datasets[self.partner_name][self.dataset_name]["columns"]
 
@@ -75,7 +83,10 @@ class DataLoader:
             Dictionary mapping dataset names to their description
 
         """
-        return {name: config["description"] for name, config in self.datasets[self.partner_name].items()}
+        return {
+            name: config["description"]
+            for name, config in self.datasets[self.partner_name].items()
+        }
 
     def load_dataset_from_signed_url(
         self,
@@ -90,53 +101,59 @@ class DataLoader:
 
         Returns:
             Optional[pd.DataFrame]: Loaded DataFrame or None on failure.
-            
+
         """
         try:
             logger.info("Reading dataset config...")
             signed_url = GetDataset(
-                provider_name=self.partner_name, dataset_name=self.dataset_name).get_dataset_path()
+                provider_name=self.partner_name, dataset_name=self.dataset_name
+            ).get_dataset_path()
 
             logger.info("Downloading Parquet file...")
 
             if show_progress:
-             
                 with requests.get(signed_url, stream=True) as response:
                     print("response", response)
                     if response.status_code != 200:
                         raise ValueError(
-                            f"Failed to download file from signed URL: {response.status_code} {response.text}")
-                    
+                            f"Failed to download file from signed URL: {response.status_code} {response.text}"
+                        )
+
                     response.raise_for_status()
-                    total_size = int(response.headers.get('Content-Length', 0))
-                    logger.info("File size: %.2f MB",
-                                total_size / (1024 * 1024))
+                    total_size = int(response.headers.get("Content-Length", 0))
+                    logger.info("File size: %.2f MB", total_size / (1024 * 1024))
 
                     buffer = io.BytesIO()
                     chunk_size = 1024 * 1024  # 1MB
-                    with tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading") as pbar:
+                    with tqdm(
+                        total=total_size, unit="B", unit_scale=True, desc="Downloading"
+                    ) as pbar:
                         for chunk in response.iter_content(chunk_size=chunk_size):
                             if chunk:
                                 buffer.write(chunk)
                                 pbar.update(len(chunk))
 
                     buffer.seek(0)
-                    logger.info("Loading selected columns: %s",
-                                columns if columns else "All Columns")
+                    logger.info(
+                        "Loading selected columns: %s",
+                        columns if columns else "All Columns",
+                    )
                     table = pq.read_table(buffer, columns=columns)
                     df = table.to_pandas()
             else:
                 logger.info("Loading Parquet data into DataFrame...")
-                df = pd.read_parquet(signed_url, engine="pyarrow",
-                                     storage_options={"token": "anon"}, columns=columns)
+                df = pd.read_parquet(
+                    signed_url,
+                    engine="pyarrow",
+                    storage_options={"token": "anon"},
+                    columns=columns,
+                )
 
-            logger.info(
-                "DataFrame loaded successfully with shape: %s", df.shape)
+            logger.info("DataFrame loaded successfully with shape: %s", df.shape)
             return df
 
         except Exception as e:
-            logger.error(
-                "Failed to load dataset. Error: %s", str(e))
+            logger.error("Failed to load dataset. Error: %s", str(e))
             return None
 
 
@@ -160,19 +177,23 @@ def load_dataset(
     """
     try:
         loader = DataLoader(
-            partner_name=partner_name, dataset_name=dataset_name, columns=columns, show_progress=show_progress
+            partner_name=partner_name,
+            dataset_name=dataset_name,
+            columns=columns,
+            show_progress=show_progress,
         )
- 
+
         return loader.load_dataset_from_signed_url(
             columns=columns, show_progress=show_progress
         )
     except Exception as e:
-        logger.error(
-            "Failed to load dataset '%s'. Error: %s", dataset_name, str(e))
+        logger.error("Failed to load dataset '%s'. Error: %s", dataset_name, str(e))
         return None
 
 
-def list_datasets(partner_name: str = "HitGen", dataset_name: str = "WDR91") -> dict[str, str]:
+def list_datasets(
+    partner_name: str = "HitGen", dataset_name: str = "WDR91"
+) -> dict[str, str]:
     """List all available pre-configured datasets.
 
     Args:
@@ -187,7 +208,9 @@ def list_datasets(partner_name: str = "HitGen", dataset_name: str = "WDR91") -> 
     return loader.list_available_datasets()
 
 
-def get_columns(partner_name: str = "HitGen", dataset_name: str = "WDR91") -> dict[str, str]:
+def get_columns(
+    partner_name: str = "HitGen", dataset_name: str = "WDR91"
+) -> dict[str, str]:
     """Get information about available columns in a dataset.
 
     Args:
