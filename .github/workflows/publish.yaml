@@ -4,9 +4,6 @@ on:
   # Only trigger on pushes to main for semantic release
   push:
     branches: [main]
-  # Trigger on pull requests to main
-  pull_request:
-    branches: [main]
 
   # Manual triggering
   workflow_dispatch:
@@ -96,6 +93,11 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.semantic-release.outputs.tag }}
+
+      # Pull the latest changes including the new tag
+      - name: Pull latest changes
+        run: |
+          git pull origin main --tags
 
       - name: Set up Python
         uses: actions/setup-python@v4

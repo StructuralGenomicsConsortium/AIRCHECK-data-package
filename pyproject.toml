@@ -1,5 +1,3 @@
-#https://medium.com/@ebimsv/building-python-packages-07fbfbb959a9
-#https://realpython.com/python-pyproject-toml/
 
 [build-system]
 requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
@@ -30,8 +28,8 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/yourusername/parquet_dataset_loader"
-"Bug Tracker" = "https://github.com/yourusername/parquet_dataset_loader/issues"
+"Homepage" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
+"Bug Tracker" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package/issues"
 
 [project.optional-dependencies]
 gcs = ["google-cloud-storage>=2.0.0"]
@@ -65,7 +63,10 @@ patch_tags = ["fix", "perf"]
 env = "GITHUB_TOKEN"
 
 [tool.semantic_release.changelog]
-changelog_file = "CHANGELOG.md"
+#changelog_file = "CHANGELOG.md"
+default_templates.changelog_file = "CHANGELOG.md"
+
+
 
 
 [tool.ruff]
