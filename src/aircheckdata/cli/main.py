@@ -1,4 +1,5 @@
 """Command-line interface for aircheckdata utilities."""
+
 import sys
 
 import click
@@ -6,7 +7,9 @@ import click
 from aircheckdata import get_columns, list_datasets, load_dataset
 
 
-@click.group(help="aircheckdata - A utility for loading AIRCHECK data from Python environment and interacting with them.")
+@click.group(
+    help="aircheckdata - A utility for loading AIRCHECK data from Python environment and interacting with them."
+)
 def cli():
     """Command-line interface group for aircheckdata utilities."""
     pass
@@ -31,13 +34,15 @@ def columns_command(partner, dataset):
     """List columns of a specific dataset."""
     try:
         click.echo(f"Listing columns for dataset: {dataset}")
-        columns = get_columns(partner_name=partner,dataset_name=dataset)
+        columns = get_columns(partner_name=partner, dataset_name=dataset)
         for column in columns:
             click.echo(f" - {column}")
     except Exception as e:
         click.echo(f"❌ Error retrieving columns: {e}", err=True)
         click.echo(
-            "💡 Tip: If your dataset name has spaces or special characters, wrap it in quotes.", err=True)
+            "💡 Tip: If your dataset name has spaces or special characters, wrap it in quotes.",
+            err=True,
+        )
         sys.exit(1)
 
 
@@ -58,7 +63,8 @@ def load_command(dataset, columns):
 
         df = load_dataset(dataset_name=dataset, columns=column_list)
         click.echo(
-            f"✅ Loaded dataset {dataset} with {len(df)} rows and {len(df.columns)} columns.")
+            f"✅ Loaded dataset {dataset} with {len(df)} rows and {len(df.columns)} columns."
+        )
     except Exception as e:
         click.echo(f"❌ Error loading dataset: {e}", err=True)
         sys.exit(1)
