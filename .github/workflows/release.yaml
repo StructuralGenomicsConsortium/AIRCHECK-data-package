@@ -29,7 +29,8 @@ jobs:
 
   check-version:
     # Only run version check for manual releases
-    if: github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    if: github.ref_name == github.event.repository.default_branch
+    # if: github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -63,6 +64,7 @@ jobs:
     needs: [test, check-version]
     if: needs.check-version.result == 'success'
     # For manual releases, also need version check ------
+
     # if: always() && needs.test.result == 'success' && (needs.check-version.result == 'success' || needs.check-version.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
