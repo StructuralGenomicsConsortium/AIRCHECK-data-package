@@ -1,6 +1,9 @@
 name: release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       release-version:
@@ -24,13 +27,11 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  check-semver:
-    # Do not release if not triggered from the default branch
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-
+  check-version:
+    # Only run version check for manual releases
+    if: github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -59,8 +60,9 @@ jobs:
           exit 1
 
   release:
-    needs: [test, check-semver]
-
+    needs: test
+    # For manual releases, also need version check
+    if: always() && needs.test.result == 'success' && (needs.check-version.result == 'success' || needs.check-version.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -79,42 +81,112 @@ jobs:
       - name: Install the project
         run: uv sync --frozen --all-groups --python 3.12
 
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ inputs.release-version }}" >> $GITHUB_OUTPUT
+            echo "Manual release triggered with version: ${{ inputs.release-version }}"
+          else
+            # For automatic releases, use semantic versioning
+            # Get the latest tag
+            latest_tag=$(git describe --abbrev=0 --tags 2>/dev/null || echo "0.0.0")
+            echo "Latest tag: $latest_tag"
+            
+            # Remove 'v' prefix if present for calculations
+            clean_tag=${latest_tag#v}
+            
+            # Check commit messages for version bump type since last tag
+            if [ "$latest_tag" = "0.0.0" ]; then
+              commits=$(git log --pretty=format:"%s")
+            else
+              commits=$(git log ${latest_tag}..HEAD --pretty=format:"%s")
+            fi
+            
+            echo "Commits since last tag:"
+            echo "$commits"
+            
+            # Check if there are any commits
+            if [ -z "$commits" ]; then
+              echo "No new commits since last tag, skipping release"
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
+            # Determine version bump based on conventional commits
+            if echo "$commits" | grep -qE "^feat(\(.+\))?:|^BREAKING CHANGE"; then
+              # Minor version bump for features
+              new_version=$(echo $clean_tag | awk -F. '{print ($1"."($2+1)".0")}')
+            elif echo "$commits" | grep -qE "^fix(\(.+\))?:|^perf(\(.+\))?:"; then
+              # Patch version bump for fixes
+              new_version=$(echo $clean_tag | awk -F. '{print ($1"."$2"."($3+1))}')
+            else
+              echo "No version-bumping commits found (no feat:, fix:, or perf: commits)"
+              echo "Commits found:"
+              echo "$commits"
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            
+            echo "version=$new_version" >> $GITHUB_OUTPUT
+            echo "Determined new version: $new_version"
+          fi
+
+      - name: Skip release if no version change
+        if: steps.version.outputs.skip == 'true'
+        run: |
+          echo "Skipping release - no version-bumping commits found"
+          exit 0
+
+      - name: Update version in pyproject.toml
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          echo "Updating pyproject.toml to version: $version"
+
+          # Update version in pyproject.toml
+          sed -i "s/version = \"[^\"]*\"/version = \"$version\"/" pyproject.toml
+
+          # Show the change
+          echo "Updated pyproject.toml:"
+          grep 'version = ' pyproject.toml
+
       - name: Build Changelog
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v5
         with:
-          toTag: "main"
+          toTag: ${{ inputs.release-version }}
           configuration: ".github/changelog_config.json"
+
+      - name: Build the wheel and sdist
+        if: steps.version.outputs.skip != 'true'
+        run: uv build
 
       - name: Create and push git tag
         run: |
+
           # Configure git
           git config --global user.name "${GITHUB_ACTOR}"
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
+
           # Tag the release
-          git tag -a "${{ inputs.release-version }}" -m "Release version ${{ inputs.release-version }}"
+          git tag -a "v$version" -m "Release version $version"
 
-          # Checkout the git tag
-          git checkout "${{ inputs.release-version }}"
-
-          # Push the modified changelogs
+          # Push the changes and tags
           git push origin main
-
-          # Push the tags
           git push origin "${{ inputs.release-version }}"
 
-      - name: Build the wheel and sdist
-        run: uv build
-
       - name: Publish package to PyPI
+        if: steps.version.outputs.skip != 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           packages-dir: dist/
 
       - name: Create GitHub Release
+        if: steps.version.outputs.skip != 'true'
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          tag_name: ${{ inputs.release-version }}
+          tag_name: v${{ steps.version.outputs.version }}
           body: ${{steps.github_release.outputs.changelog}}
