@@ -10,6 +10,7 @@ on:
       - "!gh-pages"
   schedule:
     - cron: "0 4 * * MON"
+  workflow_call:
 
 concurrency:
   group: "test-${{ github.ref }}"
