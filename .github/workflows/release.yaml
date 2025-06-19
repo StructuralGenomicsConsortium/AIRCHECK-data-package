@@ -62,7 +62,7 @@ jobs:
   release:
     needs: [test, check-version]
     if: needs.check-version.result == 'success'
-    # For manual releases, also need version check
+    # For manual releases, also need version check ------
     # if: always() && needs.test.result == 'success' && (needs.check-version.result == 'success' || needs.check-version.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
