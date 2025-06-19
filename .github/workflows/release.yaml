@@ -1,6 +1,9 @@
 name: release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       release-version:
@@ -24,13 +27,11 @@ jobs:
   test:
     uses: ./.github/workflows/test.yaml
 
-  check-semver:
-    # Do not release if not triggered from the default branch
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-
+  check-version:
+    # Only run version check for manual releases
+    if: github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
@@ -59,8 +60,9 @@ jobs:
           exit 1
 
   release:
-    needs: [test, check-semver]
-
+    needs: test
+    # For manual releases, also need version check
+    if: always() && needs.test.result == 'success' && (needs.check-version.result == 'success' || needs.check-version.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -79,6 +81,52 @@ jobs:
       - name: Install the project
         run: uv sync --frozen --all-groups --python 3.12
 
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ inputs.release-version }}" >> $GITHUB_OUTPUT
+          else
+            # For automatic releases, use semantic versioning
+            # Get the latest tag
+            latest_tag=$(git describe --abbrev=0 --tags 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $latest_tag"
+            
+            # Check commit messages for version bump type
+            commits=$(git log ${latest_tag}..HEAD --pretty=format:"%s")
+            echo "Commits since last tag:"
+            echo "$commits"
+            
+            # Determine version bump based on conventional commits
+            if echo "$commits" | grep -q "^feat\|^BREAKING CHANGE"; then
+              # Minor version bump for features
+              new_version=$(echo $latest_tag | sed 's/v//' | awk -F. '{print "v" ($1"."($2+1)".0")}')
+            elif echo "$commits" | grep -q "^fix\|^perf"; then
+              # Patch version bump for fixes
+              new_version=$(echo $latest_tag | sed 's/v//' | awk -F. '{print "v" $1"."$2"."($3+1)}')
+            else
+              echo "No version-bumping commits found, skipping release"
+              exit 0
+            fi
+            
+            echo "version=$new_version" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update version in pyproject.toml
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          # Remove 'v' prefix if present
+          version=${version#v}
+
+          # Update version in pyproject.toml
+          sed -i "s/version = \"[^\"]*\"/version = \"$version\"/" pyproject.toml
+
+          # Commit the version change
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "chore: bump version to $version" || echo "No changes to commit"
+
       - name: Build Changelog
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v5
@@ -88,21 +136,14 @@ jobs:
 
       - name: Create and push git tag
         run: |
-          # Configure git
-          git config --global user.name "${GITHUB_ACTOR}"
-          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          version="${{ steps.version.outputs.version }}"
 
           # Tag the release
-          git tag -a "${{ inputs.release-version }}" -m "Release version ${{ inputs.release-version }}"
+          git tag -a "$version" -m "Release version $version"
 
-          # Checkout the git tag
-          git checkout "${{ inputs.release-version }}"
-
-          # Push the modified changelogs
+          # Push the changes and tags
           git push origin main
-
-          # Push the tags
-          git push origin "${{ inputs.release-version }}"
+          git push origin "$version"
 
       - name: Build the wheel and sdist
         run: uv build
@@ -116,5 +157,5 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          tag_name: ${{ inputs.release-version }}
+          tag_name: ${{ steps.version.outputs.version }}
           body: ${{steps.github_release.outputs.changelog}}
