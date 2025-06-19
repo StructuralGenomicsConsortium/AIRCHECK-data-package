@@ -223,3 +223,36 @@ def get_columns(
     """
     loader = DataLoader(partner_name=partner_name, dataset_name=dataset_name)
     return loader.get_dataset_columns()
+
+def load_dataset_two(
+    partner_name: str = "HitGen",
+    dataset_name: str = "WDR91",
+    show_progress: bool = True,
+    columns: list[str] | None = None,
+) -> pd.DataFrame:
+    """Load a pre-configured dataset.
+
+    Args:
+        partner_name: Name of the dataset provider (default: "HitGen")
+        dataset_name: Name of the pre-configured dataset
+        columns: Specific columns to load (optional)
+        show_progress: Whether to display a progress bar (default: True)
+
+    Returns:
+        pandas DataFrame containing the dataset
+
+    """
+    try:
+        loader = DataLoader(
+            partner_name=partner_name,
+            dataset_name=dataset_name,
+            columns=columns,
+            show_progress=show_progress,
+        )
+
+        return loader.load_dataset_from_signed_url(
+            columns=columns, show_progress=show_progress
+        )
+    except Exception as e:
+        logger.error("Failed to load dataset '%s'. Error: %s", dataset_name, str(e))
+        return None
