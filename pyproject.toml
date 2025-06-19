@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aircheckdata"
-version = "1.0.3"
+version = "1.0.4"
 description = "This repository contains the implementation of  dataset loader for Parquet files."
 authors = [
 {name = "Nabin Bagale", email = "bhklab.nabinbagale@gmail.com"},
