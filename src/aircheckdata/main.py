@@ -224,6 +224,7 @@ def get_columns(
     loader = DataLoader(partner_name=partner_name, dataset_name=dataset_name)
     return loader.get_dataset_columns()
 
+
 def load_dataset_two(
     partner_name: str = "HitGen",
     dataset_name: str = "WDR91",
