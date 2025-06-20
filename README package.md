@@ -130,6 +130,16 @@ This package is distributed under the **MIT License**. However, the datasets it 
 Currently available datasets include:
 
 - `WDR91`: A curated Parquet dataset provided by **HitGen**
+- `WDR12`: A curated Parquet dataset provided by **HitGen**
+- `SETDB1`: A curated Parquet dataset provided by **HitGen**
+- `LRRK2`: A curated Parquet dataset provided by **HitGen**
+- `DCAF7`: A curated Parquet dataset provided by **HitGen**
+- `Chicken PLCZ1`: A curated Parquet dataset provided by **HitGen**
+- `Chicken PLCZ1 known inhibitor`: A curated Parquet dataset provided by **HitGen**
+- `Human PLCZ1 (D202R OR H170A&H215A)`: A curated Parquet dataset provided by **HitGen**
+- `Human PLCZ1 (D202R OR H170A&H215A) known inhibitor`: A curated Parquet dataset provided by **HitGen**
+- `PLCZ1 (Chicken or Human mutants)`: A curated Parquet dataset provided by **HitGen**
+- `PLCZ1 off target His-PLCD1;2:756`: A curated Parquet dataset provided by **HitGen**
 
 ---
 
