@@ -1,11 +1,7 @@
-fastapi
-pandas
-google-cloud-storage
-pyarrow
-gcsfs
-tqdm
-pyyaml
-click
-build
-pytest
-
+# Runtime dependencies. pyproject.toml is the source of truth; keep in sync.
+pandas>=1.3.0
+pyarrow>=5.0.0
+tqdm>=4.62.0
+requests>=2.25.0
+PyYAML>=5.4.0
+click>=8.0.0

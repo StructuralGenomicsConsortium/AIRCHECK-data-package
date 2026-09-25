@@ -30,6 +30,7 @@ jobs:
 
     outputs:
       release-version: ${{ steps.bump_version.outputs.release_version }}
+      release: ${{ steps.bump_version.outputs.release }}
 
     steps:
       - name: Checkout the code
@@ -37,30 +38,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get latest tag
-        id: get_tag
-        run: |
-          tag=$(git describe --tags --abbrev=0 || echo "v0.0.0")
-          echo "Latest tag: $tag"
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-
-      - name: Calculate next version
+      - name: Read package version
         id: bump_version
         run: |
-          latest=${{ steps.get_tag.outputs.tag }}
-          # Strip the 'v' prefix
-          latest=${latest#v}
-
-          IFS='.' read -r major minor patch <<< "$latest"
-          patch=$((patch + 1))
-          next_version="v$major.$minor.$patch"
-
-          echo "Next version will be: $next_version"
-          echo "release_version=$next_version" >> $GITHUB_OUTPUT
+          version=$(sed -nE 's/^__version__ = "([^"]+)"/\1/p' src/aircheckdata/__init__.py)
+          if [ -z "$version" ]; then
+            echo "Could not read __version__ from src/aircheckdata/__init__.py" >&2
+            exit 1
+          fi
+          tag="v$version"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag already exists; bump __version__ to release."
+            echo "release=false" >> $GITHUB_OUTPUT
+          else
+            echo "Releasing $tag"
+            echo "release=true" >> $GITHUB_OUTPUT
+          fi
+          echo "release_version=$tag" >> $GITHUB_OUTPUT
 
   release:
     needs: [test, check-semver]
-    if: needs.check-semver.result == 'success'
+    if: needs.check-semver.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -84,7 +82,6 @@ jobs:
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v5
         with:
-          toTag: ${{ env.RELEASE_VERSION }}
           configuration: ".github/changelog_config.json"
 
       - name: Create and push git tag

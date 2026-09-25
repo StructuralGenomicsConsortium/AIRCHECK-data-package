@@ -1,1 +1,1 @@
-"""init file for the airctest.cli package."""
+"""Command-line interface package for aircheckdata."""
