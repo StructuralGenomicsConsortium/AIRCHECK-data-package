@@ -2,6 +2,31 @@
 
 <!-- version list -->
 
+## v2.0.0 (2026-09-25)
+
+### Breaking changes
+
+- `load_dataset`, `list_datasets` and `get_columns` now raise
+  (`DatasetNotFoundError`, `DownloadError`, `ValueError`) instead of returning `None`.
+- The package no longer installs top-level `utils` and `configs` modules; the
+  dataset registry lives at `aircheckdata/configs/datasets.yaml`.
+- `list_datasets()` takes only `partner_name`.
+- CLI `load` now takes `PARTNER DATASET` like `columns`; `partners` and `cache`
+  commands added.
+- Requires Python 3.10+ (the code already used 3.10 syntax).
+
+### Features
+
+- Datasets are cached on disk (`~/.cache/aircheckdata` or `$AIRCHECKDATA_CACHE_DIR`)
+  and downloaded once; `clear_cache()` and `use_cache=False` added.
+- Downloads stream to disk atomically with request timeouts.
+
+### Fixes
+
+- Library no longer calls `logging.basicConfig` on import; debug prints removed.
+- Single-sourced version (`aircheckdata.__version__`); `gcsfs` dependency dropped.
+- Test suite no longer hits the network.
+
 ## v1.0.1 (2025-06-05)
 
 ### Bug Fixes

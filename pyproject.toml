@@ -1,121 +1,98 @@
-
-
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "aircheckdata"
-version = "1.0.4"
-description = "This repository contains the implementation of  dataset loader for Parquet files."
+dynamic = ["version"]
+description = "Load AIRCHECK DNA-encoded library (DEL) datasets into pandas DataFrames."
 authors = [
-{name = "Nabin Bagale", email = "bhklab.nabinbagale@gmail.com"},
+    { name = "Nabin Bagale", email = "bhklab.nabinbagale@gmail.com" },
 ]
 readme = "README package.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
 ]
-requires-python = ">=3.9"
 dependencies = [
     "pandas>=1.3.0",
     "pyarrow>=5.0.0",
     "tqdm>=4.62.0",
     "requests>=2.25.0",
     "PyYAML>=5.4.0",
-    "gcsfs>=2025.3.2",
     "click>=8.0.0",
 ]
 
-[dependency-groups]
-dev = [
-    "ipywidgets",
-    "jupyterlab",
-    "pytest >=7",
-    "pytest-xdist",
-    "pytest-cov",
-    "ruff",
-]
-
 [project.urls]
-"Website" = "https://www.aircheck.ai/"
+Website = "https://www.aircheck.ai/"
 "Source Code" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
 "Bug Tracker" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package/issues"
-"Documentation" = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
-
-[project.optional-dependencies]
-gcs = ["google-cloud-storage>=2.0.0"]
-dev = ["pytest>=7.0.0"]
-
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.package-data]
-"*" = ["*.yaml", "*.yml", "*.json"]
-
-[tool.setuptools.packages.find]
-where = ["src"]
+Documentation = "https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package"
 
 [project.scripts]
 aircheckdata = "aircheckdata.cli.main:cli"
 
+[dependency-groups]
+dev = [
+    "pytest>=7",
+    "pytest-xdist",
+    "pytest-cov",
+    "ruff",
+    "ipywidgets",
+    "jupyterlab",
+]
 
-[tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-branch = "main"
-upload_to_pypi = false
-upload_to_release = true
-build_command = "pip install build && python -m build"
+[tool.setuptools]
+package-dir = { "" = "src" }
 
-[tool.semantic_release.commit_parser_options]
-allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
-minor_tags = ["feat"]
-patch_tags = ["fix", "perf"]
+[tool.setuptools.packages.find]
+where = ["src"]
 
-[tool.semantic_release.remote.token]
-env = "GITHUB_TOKEN"
+[tool.setuptools.package-data]
+aircheckdata = ["configs/*.yaml"]
 
-[tool.semantic_release.changelog]
-changelog_file = "CHANGELOG.md"
+[tool.setuptools.dynamic]
+version = { attr = "aircheckdata.__version__" }
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py310"
 
 [tool.ruff.lint]
-# Activate all the rules that are pyupgrade-related
 select = [
-  "UP",   # pyupgrade
-  "D",    # pydocstyle
-  "PT",   # pytest style checking
-  "C4",   # comprehensions style checking
-  "PD",   # pandas style checking
-  "F",    # pyflakes: is-literal
-  "W605", # pycodestyle: invalid-escape-sequence
-  "I",    # isort
-  "UP015", # pyupgrade: use f-string
-  
+    "UP",   # pyupgrade
+    "D",    # pydocstyle
+    "PT",   # pytest style
+    "C4",   # comprehensions
+    "PD",   # pandas-vet
+    "F",    # pyflakes
+    "W605", # invalid escape sequence
+    "I",    # isort
 ]
 ignore = [
-  "PD901",  # Allow short DataFrame names like df
-  "F401", # Allow use of is-literal in f-strings
-   "D212", # Allow docstrings to not have a blank line after the summary
-   "E203", # Allow whitespace before ':', which is common in pandas code
-    "D213"   , # Allow docstrings to not have a blank line after the summary
+    "PD901", # allow short DataFrame names like df
+    "D212",  # summary may start on the second line
+    "D213",  # summary may start on the first line
 ]
 
-per-file-ignores = {"__init__.py" = ["F401"]}
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["D"]
 
 [tool.ruff.lint.pydocstyle]
-convention = "google"  # or "numpy" or "pep257"
+convention = "google"
 
 [tool.ruff.format]
-# Use double quotes for strings
 quote-style = "double"
-# Use trailing commas
 skip-magic-trailing-comma = false
-
-
-

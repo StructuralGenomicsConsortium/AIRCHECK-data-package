@@ -26,19 +26,7 @@ You can install the package from PyPI:
 pip install aircheckdata
 ```
 
-For development and testing (optional):
-
-```bash
-pip install -e ".[dev]"
-```
-
-Installation verification (optional)
-
-Verify that the installation was successful by running unit tests
-
-```bash
-pytest tests/
-```
+For development see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -78,53 +66,84 @@ print("Column Names: \n", names)
 ```python
 from aircheckdata import load_dataset
 
-df = load_dataset('HitGen','WDR91', columns=['ECFP6','ECFP4','LABEL'])  # Download specified data columns with progressbar or
-df = load_dataset('HitGen','WDR91', columns=['ECFP6','ECFP4','LABEL'],show_progress=False) # Download specified data columns with without progressbar, this is more memory efficient and faster
-df = load_dataset()  # Download once, then cache locally (by default it loads HitGen WDR91 Target)
+# Argument order is (partner, dataset). Both default to HitGen / WDR91.
+df = load_dataset("HitGen", "WDR91", columns=["ECFP6", "ECFP4", "LABEL"])
+df = load_dataset()  # every column of HitGen WDR91
 print(df.head())
 ```
+
+The first call downloads the Parquet file into a local cache; later calls, with any column selection, read from the cached file and need no network.
 
 ### Advanced Usage
 
 ```python
-# Load only selected columns
-df = load_dataset('WDR91', columns=['ECFP6', 'ECFP4', 'LABEL'])
+from aircheckdata import load_dataset, clear_cache, DatasetNotFoundError, DownloadError
 
-# Show progress while loading
-df = load_dataset('WDR91', show_progress=True)
+# Hide the progress bar
+df = load_dataset("HitGen", "WDR91", columns=["LABEL"], show_progress=False)
 
+# Use a custom cache location (or set AIRCHECKDATA_CACHE_DIR)
+df = load_dataset("HitGen", "WDR91", cache_dir="/data/aircheck-cache")
 
+# Do not keep the file on disk after reading
+df = load_dataset("HitGen", "WDR91", use_cache=False)
+
+# Errors are raised, not swallowed
+try:
+    load_dataset("HitGen", "NoSuchTarget")
+except DatasetNotFoundError as e:
+    print(e)
+
+# Free disk space
+clear_cache()                    # everything
+clear_cache("HitGen", "WDR91")   # one dataset
 ```
+
+### Caching
+
+Datasets are stored under `~/.cache/aircheckdata` (or `$XDG_CACHE_HOME/aircheckdata`). Set the `AIRCHECKDATA_CACHE_DIR` environment variable or pass `cache_dir=` to change this. Downloads are written to a temporary `.part` file and renamed only on completion, so an interrupted download never leaves a corrupt cache entry.
 
 ---
 
 ## 💻 CLI Usage
 
-The `aircheckdata` CLI enables quick access to datasets via command-line:
-
 ```bash
 aircheckdata --help
 ```
 
-### Options and Examples
+| Command                                          | Description                                             |
+| ------------------------------------------------ | ------------------------------------------------------- |
+| `partners`                                       | List dataset providers                                  |
+| `list [PARTNER]`                                 | List datasets and descriptions (default: HitGen)        |
+| `columns [PARTNER] [DATASET]`                    | List columns of a dataset (default: HitGen WDR91)       |
+| `load [PARTNER] [DATASET] [-c COLS] [--no-cache]` | Download a dataset into the cache and print its shape   |
+| `cache [--clear]`                                | Show the cache directory, or delete all cached datasets |
 
-| Option                                | Description                                         |
-| ------------------------------------- | --------------------------------------------------- |
-| `list`                                | List all available datasets                         |
-| `columns Provider Name "Target Name"` | Select columns to load or list columns of a dataset |
+Add `-v` before the command to see download and read log messages.
 
 #### Examples
 
 ```bash
-# List datasets
 aircheckdata list
-
-
-# View available columns for Distinct Target (defaults to HitGen WDR91 if no provider and Target name is given)
-# aircheckdata columns
-airctest columns <Provider Name> <Target Name>
-airctest columns HitGen "WDR12"
+aircheckdata columns HitGen WDR12
+aircheckdata columns HitGen "Chicken PLCZ1"          # quote names with spaces
+aircheckdata load HitGen WDR91 -c ECFP4,LABEL
+aircheckdata -v load HitGen SETDB1 --no-progress
+aircheckdata cache --clear
 ```
+
+---
+
+## 🧑‍💻 Development and Releasing
+
+```bash
+uv sync --all-groups      # install with dev tools
+uv run ruff format .      # format
+uv run ruff check .       # lint
+uv run pytest             # tests (no network needed)
+```
+
+Work on a feature branch, commit with a [Conventional Commits](https://www.conventionalcommits.org/) prefix (`feat:`, `fix:`, `docs:`, ...), open a PR with a `feature`/`fix`/`documentation` label, and merge into `main`. Bumping `__version__` in `src/aircheckdata/__init__.py` and merging is what publishes a new version to PyPI. Full details, including local package checks and what the release workflow does, are in **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
 ---
 
@@ -159,7 +178,7 @@ Currently available datasets include:
 
 ## 🛠 Requirements
 
-- Python 3.7+
+- Python 3.10+
 
 ---
 
