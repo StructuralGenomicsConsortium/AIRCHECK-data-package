@@ -162,3 +162,19 @@ Currently available datasets include:
 - Python 3.7+
 
 ---
+
+## 💬 Feedback, Issues, and Support
+
+We welcome feedback and contributions to help improve `aircheckdata`.
+
+If you encounter a bug, experience unexpected behavior, have a question, or would like to suggest a new feature, please submit an issue through our GitHub Issues page.
+
+- **🐛 Bug Reports:** Report bugs, errors, or unexpected behavior.
+- **💡 Feature Requests:** Suggest new features, datasets, or improvements.
+- **❓ Questions and Support:** Ask questions about package usage, dataset access, or functionality.
+
+👉 **[Report an Issue or Submit Feedback](https://github.com/StructuralGenomicsConsortium/AIRCHECK-data-package/issues)**
+
+When submitting an issue, please include a clear description of the problem or suggestion, the steps to reproduce the issue (if applicable), and relevant error messages or code snippets.
+
+
